@@ -1,0 +1,50 @@
+# Environments
+backend/venv/
+backend/venv2/
+backend/__pycache__/
+backend/.pytest_cache/
+.env
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.DS_Store
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Scratch dir
+scratch/
+
+# Personal files and local configuration
+backend/*.pdf
+backend/crew_agency_backup.py
+backend/.env
+frontend/.env
+frontend/.env.*
+!.env.example
+.vscode/
+
+# Build and test artifacts
+.pytest_cache/
+
+
+# Secrets and local databases
+*.pem
+*.key
+*.sqlite3
+*.db
