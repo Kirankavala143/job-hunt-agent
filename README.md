@@ -29,7 +29,8 @@ Upload your resume, enter a natural-language job search request, and discover op
 
 ## 📸 Application Preview
 
-<img width="1920" height="1140" alt="Job Hunt AI Dashboard" src="https://github.com/user-attachments/assets/829cb495-dbfb-4aa0-ad73-29e0e9275a4d" />
+<img width="1920" height="1140" alt="DashBoard" src="https://github.com/user-attachments/assets/64e9ed8c-7601-49c5-ae1a-13f5c52d2311" />
+
 
 ## ✨ Key Features
 
