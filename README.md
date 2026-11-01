@@ -7,12 +7,29 @@ Upload your resume, enter a natural-language job search request, and discover op
 ![Project Status](https://img.shields.io/badge/Status-Beta-orange)
 ![Frontend](https://img.shields.io/badge/Frontend-React-blue)
 ![Backend](https://img.shields.io/badge/Backend-FastAPI-green)
+![Deployment](https://img.shields.io/badge/Deployment-Render-purple)
+
+---
+
+## 🌐 Live Application
+
+| Component | Link |
+|---|---|
+| Live Application | https://job-hunt-agent-1.onrender.com |
+| Backend API | https://job-hunt-agent-fl5z.onrender.com |
+| API Documentation | https://job-hunt-agent-fl5z.onrender.com/docs |
+| Backend Health Check | https://job-hunt-agent-fl5z.onrender.com/health |
+| GitHub Repository | https://github.com/Kirankavala143/job-hunt-agent |
+
+**Deployment:** The React frontend and FastAPI backend are currently deployed as separate Render services. The frontend communicates with the backend through its API.
+
+**Note:** Render's free services can spin down after inactivity, so the first request may take longer while the service starts.
+
 ---
 
 ## 📸 Application Preview
 
-<img width="1920" height="1140" alt="DashBoard" src="https://github.com/user-attachments/assets/829cb495-dbfb-4aa0-ad73-29e0e9275a4d" />
-
+<img width="1920" height="1140" alt="Job Hunt AI Dashboard" src="https://github.com/user-attachments/assets/829cb495-dbfb-4aa0-ad73-29e0e9275a4d" />
 
 ## ✨ Key Features
 
@@ -36,7 +53,7 @@ flowchart TD
     C --> E[Natural Language Job Search]
 
     D --> F[PDF Text Extraction]
-    E --> G[Python Search Detail Extraction]
+    E --> G[Search Detail Extraction]
 
     F --> H[Resume Context]
     G --> I[Role and Location Keywords]
@@ -45,7 +62,7 @@ flowchart TD
     I --> J
 
     J --> K[JobSpy - Indeed and LinkedIn]
-    J --> L[LinkedIn Playwright]
+    J --> L[Playwright Scraper]
     J --> M[RSS Feeds]
     J --> N[Y Combinator]
 
@@ -70,8 +87,8 @@ flowchart TD
 4. **Deduplication:** Duplicate listings are removed using job title and company information.
 5. **Job Filtering:** The filtering engine checks role relevance, experience requirements, seniority and location.
 6. **ATS Scoring:** The application calculates keyword coverage between resume skills and job descriptions.
-7. **Semantic Matching:** TF-IDF and cosine similarity estimate the textual similarity between the resume and job descriptions.
-8. **Ranking:** The results are ranked using a combined score and returned to the React dashboard.
+7. **Semantic Matching:** TF-IDF and cosine similarity estimate textual similarity between the resume and job descriptions.
+8. **Ranking:** Results are ranked using a combined score and returned to the React dashboard.
 
 ## 📊 Resume Matching Methodology
 
@@ -105,44 +122,25 @@ These scores are approximate matching indicators, not guarantees of employer ATS
 | ATS Matching | Python, keyword matching |
 | Semantic Matching | scikit-learn, TF-IDF, cosine similarity |
 | Version Control | Git, GitHub |
+| Deployment | Render |
 
 ## 📁 Project Structure
 
 ```text
-job-hunt-agent-custom/
+job-hunt-agent/
 │
 ├── backend/
 │   ├── main.py
-│   │   └── FastAPI application and API endpoints
-│   │
 │   ├── agent.py
-│   │   └── Search query and job detail extraction
-│   │
 │   ├── crew_agency.py
-│   │   └── Job scraper orchestration and aggregation
-│   │
 │   ├── scraper.py
-│   │   └── Job scraping implementations
-│   │
 │   ├── job_filter.py
-│   │   └── Role-based filtering and relevance ranking
-│   │
 │   ├── ats_scorer.py
-│   │   └── ATS and semantic scoring engine
-│   │
 │   ├── mcp_export.py
-│   │   └── Optional MCP integration
-│   │
 │   └── requirements.txt
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx
-│   │   ├── JobCard.tsx
-│   │   ├── main.tsx
-│   │   ├── App.css
-│   │   └── index.css
-│   │
 │   ├── public/
 │   ├── package.json
 │   ├── package-lock.json
@@ -166,8 +164,8 @@ job-hunt-agent-custom/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/Kirankavala143/job-hunt-agent-custom.git
-cd job-hunt-agent-custom
+git clone https://github.com/Kirankavala143/job-hunt-agent.git
+cd job-hunt-agent
 ```
 
 ### 2. Backend Setup
@@ -193,21 +191,27 @@ playwright install chromium
 Start the backend:
 
 ```bash
-python main.py
+uvicorn main:app --reload
 ```
 
-Backend URL: `http://localhost:8000`
+Backend URL:
+
+`http://localhost:8000`
+
+API documentation:
+
+`http://localhost:8000/docs`
 
 ### 3. Frontend Setup
 
-Open a new terminal:
+Open a new terminal from the project root:
 
 ```bash
 cd frontend
 npm install
 ```
 
-Create a local `.env` file:
+Create a local `.env` file inside the frontend directory:
 
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:8000
@@ -219,17 +223,51 @@ Start the frontend:
 npm run dev
 ```
 
-Frontend URL: `http://localhost:5173`
+Frontend URL:
+
+`http://localhost:5173`
+
+## ☁️ Deployment on Render
+
+The application is deployed using two Render services connected to the same GitHub repository.
+
+### Backend – Render Web Service
+
+| Setting | Value |
+|---|---|
+| Runtime | Python 3 |
+| Root Directory | `backend` |
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
+
+Backend:
+
+https://job-hunt-agent-fl5z.onrender.com
+
+### Frontend – Render Static Site
+
+The frontend is deployed separately as a Render Static Site.
+
+The deployed frontend communicates with the backend API.
+
+Frontend:
+
+https://job-hunt-agent-1.onrender.com
+
+The backend CORS configuration must allow the deployed frontend origin.
 
 ## 🔌 API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
+| GET | `/` | Backend root endpoint |
+| GET | `/health` | Backend health check |
 | POST | `/api/upload_resume` | Upload and extract resume text |
 | POST | `/api/chat` | Search for relevant job opportunities |
-| GET | `/` | Backend health check |
 
-API documentation: `http://localhost:8000/docs`
+API documentation:
+
+https://job-hunt-agent-fl5z.onrender.com/docs
 
 ## ⚠️ Limitations
 
@@ -238,18 +276,20 @@ API documentation: `http://localhost:8000/docs`
 - Some job descriptions may not be publicly accessible.
 - ATS and semantic scores are estimates, not official employer scores.
 - Resume context is currently maintained in backend memory and is not a persistent multi-user storage system.
+- Free hosting services may experience cold starts after inactivity.
 
 ## 🚀 Future Development Roadmap
 
 The project is currently in its beta stage. The following improvements are planned to make it a more complete, reliable and intelligent job-search platform.
 
 ### Phase 1 – Deployment and Reliability
-- Deploy the React frontend and FastAPI backend to cloud hosting platforms.
-- Configure production environment variables and secure API communication.
+
 - Improve scraper error handling, retries and rate-limit management.
-- Add application health checks and structured logging.
+- Add more robust application health checks and structured logging.
+- Improve production monitoring and service reliability.
 
 ### Phase 2 – Advanced AI-Powered Matching
+
 - Improve semantic matching using sentence-transformer embeddings.
 - Introduce contextual resume-to-job compatibility analysis.
 - Generate personalized skill-gap reports for each job.
@@ -257,6 +297,7 @@ The project is currently in its beta stage. The following improvements are plann
 - Explore optional LLM-powered job recommendations.
 
 ### Phase 3 – Personalized Job Management
+
 - Implement user registration and authentication.
 - Add persistent user profiles and resume storage.
 - Allow users to save, bookmark and track job applications.
@@ -264,6 +305,7 @@ The project is currently in its beta stage. The following improvements are plann
 - Maintain individual job-search history and preferences.
 
 ### Phase 4 – Automated Job Discovery
+
 - Integrate additional job sources and company career portals.
 - Implement scheduled job discovery and personalized email notifications.
 - Detect duplicate listings across multiple job platforms.
@@ -271,6 +313,7 @@ The project is currently in its beta stage. The following improvements are plann
 - Add location, salary, experience and employment-type filters.
 
 ### Phase 5 – Analytics and Career Insights
+
 - Build a personalized job-search analytics dashboard.
 - Track ATS compatibility trends across applications.
 - Identify frequently requested skills in target job categories.
@@ -293,4 +336,4 @@ This project was developed by extending and customizing an existing educational 
 
 GitHub: [Kirankavala143](https://github.com/Kirankavala143)
 
-Project: [Job Hunt Agent Custom](https://github.com/Kirankavala143/job-hunt-agent-custom)
+Project: [Job Hunt AI](https://github.com/Kirankavala143/job-hunt-agent)
