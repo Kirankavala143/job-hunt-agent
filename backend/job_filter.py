@@ -5,128 +5,140 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 SENIOR_TERMS = {
-    "senior", "sr.", "sr ", "staff", "principal",
-    "director", "vice president", "vp ",
-    "architect", "engineering manager"
+    "senior", "sr.", "sr ", "staff", "principal", "director",
+    "vice president", "vp ", "architect", "engineering manager",
+    "lead engineer", "tech lead", "team lead", "staff engineer",
+    "senior engineer", "senior scientist", "lead scientist",
+    "distinguished", "fellow",
 }
 
+# Common job-grade suffixes used for experienced positions (e.g. Engineer IV).
+SENIOR_GRADE_PATTERN = re.compile(
+    r"\b(?:engineer|scientist|developer|analyst)\s*[-,]?\s*(?:iii|iv|v|vi|3|4|5|6)\b",
+    re.IGNORECASE,
+)
+
 NON_TECHNICAL_TERMS = {
-    "marketing", "sales executive", "telecaller",
-    "recruiter", "human resources", "hr executive",
-    "business development", "account executive"
+    "marketing", "sales executive", "telecaller", "recruiter",
+    "human resources", "hr executive", "business development",
+    "account executive",
 }
 
 ENTRY_LEVEL_TERMS = {
-    "intern", "internship", "fresher", "entry level",
-    "junior", "graduate", "trainee", "associate"
+    "intern", "internship", "fresher", "entry level", "junior",
+    "graduate", "trainee", "associate",
 }
 
 ROLE_CONFIG = {
     "python": {
         "roles": {
-            "python developer",
-            "python engineer",
-            "python backend developer",
-            "python development",
+            "python developer", "python engineer",
+            "python backend developer", "python development",
         },
         "related": {
-            "backend developer",
-            "software developer",
-            "software engineer",
+            "backend developer", "software developer",
+            "software engineer", "python programmer",
         },
         "skills": {
-            "python", "fastapi", "flask", "django",
-            "sql", "rest api",
+            "python", "fastapi", "flask", "django", "sql", "rest api",
         },
         "exclude_roles": {
-            "data scientist", "data science",
-            "data analyst", "data analytics",
-            "machine learning engineer",
-            "ai engineer", "artificial intelligence",
-            "generative ai",
+            "data scientist", "data science", "data analyst",
+            "data analytics", "machine learning engineer",
+            "ai engineer", "artificial intelligence", "generative ai",
+            "ml engineer", "deep learning",
         },
     },
 
     "generative ai": {
         "roles": {
-            "generative ai", "genai", "llm",
-            "rag developer", "prompt engineer",
-            "ai agent developer",
+            "generative ai", "genai", "llm engineer",
+            "llm developer", "rag developer", "prompt engineer",
+            "ai agent developer", "generative ai engineer",
+            "gen ai engineer", "large language model",
         },
         "related": {
-            "python developer", "ai engineer",
-            "machine learning engineer",
+            "ai engineer", "machine learning engineer",
+            "ml engineer", "nlp engineer",
         },
         "skills": {
-            "python", "llm", "rag", "langchain",
-            "generative ai", "genai",
-            "prompt engineering", "llm api",
+            "python", "llm", "rag", "langchain", "generative ai",
+            "genai", "prompt engineering", "llm api", "vector database",
+            "embedding", "llamaindex",
         },
-        "exclude_roles": set(),
+        "exclude_roles": {
+            "python developer", "python engineer",
+            "python backend developer",
+        },
     },
 
     "machine learning": {
         "roles": {
-            "machine learning", "ml engineer",
-            "ai engineer", "artificial intelligence",
+            "machine learning", "machine learning engineer",
+            "ml engineer", "ai engineer", "artificial intelligence",
+            "ai/ml engineer", "ai ml engineer", "deep learning engineer",
+            "computer vision engineer", "nlp engineer",
+            "machine learning intern", "ml intern", "ai intern",
+            "deep learning intern", "computer vision intern",
+            "research engineer", "research scientist",
         },
         "related": {
-            "data scientist", "python developer",
+            "data scientist", "applied scientist",
+            "machine learning researcher",
         },
         "skills": {
-            "python", "machine learning",
-            "deep learning", "scikit-learn",
-            "tensorflow", "pytorch", "pandas",
+            "python", "machine learning", "deep learning",
+            "scikit-learn", "tensorflow", "pytorch", "pandas",
+            "numpy", "computer vision", "nlp", "model training",
         },
-        "exclude_roles": set(),
+        "exclude_roles": {
+            "python developer", "python engineer",
+            "python backend developer", "python development",
+            "backend developer", "software developer",
+            "software engineer",
+        },
     },
 
     "full stack": {
         "roles": {
-            "full stack", "fullstack",
-            "react developer", "web developer",
+            "full stack", "fullstack", "react developer",
+            "web developer", "full stack developer",
         },
         "related": {
             "frontend developer", "backend developer",
             "software developer",
         },
         "skills": {
-            "react", "javascript", "typescript",
-            "node.js", "express", "mongodb",
-            "html", "css", "rest api",
+            "react", "javascript", "typescript", "node.js",
+            "express", "mongodb", "html", "css", "rest api",
         },
         "exclude_roles": set(),
     },
 
     "data analyst": {
         "roles": {
-            "data analyst", "data analytics",
-            "business analyst",
+            "data analyst", "data analytics", "business analyst",
         },
-        "related": {
-            "sql analyst", "reporting analyst",
-        },
+        "related": {"sql analyst", "reporting analyst"},
         "skills": {
-            "sql", "python", "excel",
-            "power bi", "tableau", "pandas",
+            "sql", "python", "excel", "power bi", "tableau", "pandas",
         },
         "exclude_roles": set(),
     },
 
     "software engineer": {
         "roles": {
-            "software engineer", "software developer",
-            "sde", "application developer",
+            "software engineer", "software developer", "sde",
+            "application developer",
         },
         "related": {
             "backend developer", "frontend developer",
             "full stack developer",
         },
         "skills": {
-            "python", "java", "javascript",
-            "sql", "api", "data structures",
+            "python", "java", "javascript", "sql", "api",
+            "data structures",
         },
         "exclude_roles": set(),
     },
@@ -137,219 +149,203 @@ EXPERIENCE_PATTERNS = [
     r"\b(\d+)\+?\s*years?\s+(?:of\s+)?experience\b",
     r"\bminimum\s+(\d+)\s+years?\b",
     r"\bat\s+least\s+(\d+)\s+years?\b",
+    r"\b(\d+)\+\s*years?\b",
 ]
 
 MAX_ENTRY_LEVEL_EXPERIENCE = 1
 
+FOREIGN_LOCATIONS = {
+    "united states", "usa", "boston", "new york", "california",
+    "texas", "seattle", "chicago", "united kingdom", "london",
+    "canada", "toronto", "vancouver", "australia", "sydney",
+}
+
+INDIA_CITIES = {
+    "india", "bangalore", "bengaluru", "hyderabad", "chennai",
+    "pune", "mumbai", "delhi", "noida", "gurgaon", "gurugram",
+    "vizag", "visakhapatnam", "vijayawada", "vizianagaram",
+    "kolkata", "kochi", "coimbatore", "ahmedabad", "jaipur",
+}
+
 
 def normalize(text: str) -> str:
-    return re.sub(
-        r"[^a-z0-9+#.\s]",
-        " ",
-        str(text).lower()
-    )
+    """Normalize text while retaining common technical symbols."""
+    return re.sub(r"[^a-z0-9+#.\s]", " ", str(text or "").lower())
 
 
 def contains_term(text: str, term: str) -> bool:
-    pattern = (
-        r"(?<!\w)"
-        + re.escape(term.lower())
-        + r"(?!\w)"
-    )
+    """Match a term at word boundaries."""
+    text = normalize(text)
+    term = normalize(term).strip()
+
+    if not term:
+        return False
+
+    pattern = r"(?<!\w)" + re.escape(term) + r"(?!\w)"
     return bool(re.search(pattern, text))
 
 
 def get_required_experience(text: str):
+    """Return the smallest explicit experience requirement found."""
     for pattern in EXPERIENCE_PATTERNS:
-        matches = re.findall(pattern, text, re.IGNORECASE)
+        matches = re.findall(pattern, text or "", re.IGNORECASE)
+        values = []
 
-        if matches:
-            values = []
+        for match in matches:
+            if isinstance(match, tuple):
+                values.extend(int(value) for value in match if value)
+            else:
+                values.append(int(match))
 
-            for match in matches:
-                if isinstance(match, tuple):
-                    values.extend(
-                        int(value)
-                        for value in match
-                        if value
-                    )
-                else:
-                    values.append(int(match))
-
-            if values:
-                return min(values)
+        if values:
+            return min(values)
 
     return None
+
+
+def _identify_role_config(query: str) -> dict[str, Any]:
+    """Identify the requested role; specific AI terms take precedence."""
+    q = normalize(query)
+
+    # Prioritize specialized domains over generic terms such as Python.
+    if any(contains_term(q, term) for term in (
+        "generative ai", "genai", "gen ai", "llm", "rag",
+        "prompt engineer", "ai agent",
+    )):
+        return ROLE_CONFIG["generative ai"]
+
+    if any(contains_term(q, term) for term in (
+        "machine learning", "ml engineer", "ai engineer",
+        "artificial intelligence", "ai/ml", "deep learning",
+        "computer vision", "nlp engineer",
+    )):
+        return ROLE_CONFIG["machine learning"]
+
+    if any(contains_term(q, term) for term in (
+        "full stack", "fullstack", "react", "node", "frontend",
+        "backend", "web developer",
+    )):
+        return ROLE_CONFIG["full stack"]
+
+    if any(contains_term(q, term) for term in (
+        "data analyst", "data analytics", "business analyst",
+    )):
+        return ROLE_CONFIG["data analyst"]
+
+    if contains_term(q, "python"):
+        return ROLE_CONFIG["python"]
+
+    if any(contains_term(q, term) for term in (
+        "software engineer", "software developer", "sde",
+    )):
+        return ROLE_CONFIG["software engineer"]
+
+    return ROLE_CONFIG["software engineer"]
 
 
 def filter_and_rank_jobs(
     jobs: list[dict[str, Any]],
     keywords_list: list[str],
-    location: str = "Remote India"
+    location: str = "Remote India",
 ) -> list[dict[str, Any]]:
+    """
+    Filter jobs by role title, experience, and location, then rank them.
 
+    Important: for AI/ML and GenAI, a generic Python title does not qualify
+    unless it also contains a recognized AI/ML or GenAI title.
+    """
     if not jobs:
         return []
 
     query = normalize(" ".join(keywords_list))
+    config = _identify_role_config(query)
 
-    # Identify the primary requested domain.
-    config = None
-
-    for domain, settings in ROLE_CONFIG.items():
-        if contains_term(query, domain):
-            config = settings
-            break
-
-    # Handle common variations.
-    if config is None:
-        if contains_term(query, "python"):
-            config = ROLE_CONFIG["python"]
-        elif any(
-            contains_term(query, term)
-            for term in ["genai", "llm", "rag"]
-        ):
-            config = ROLE_CONFIG["generative ai"]
-        elif any(
-            contains_term(query, term)
-            for term in ["ai", "machine learning"]
-        ):
-            config = ROLE_CONFIG["machine learning"]
-        elif any(
-            contains_term(query, term)
-            for term in ["react", "node", "frontend", "backend"]
-        ):
-            config = ROLE_CONFIG["full stack"]
-        elif contains_term(query, "data"):
-            config = ROLE_CONFIG["data analyst"]
-        else:
-            config = ROLE_CONFIG["software engineer"]
-
-    requested_roles = {
-        normalize(term) for term in config["roles"]
-    }
-
-    related_roles = {
-        normalize(term) for term in config["related"]
-    }
-
-    requested_skills = {
-        normalize(term) for term in config["skills"]
-    }
-
-    excluded_roles = {
-        normalize(term) for term in config["exclude_roles"]
-    }
+    requested_roles = {normalize(term) for term in config["roles"]}
+    related_roles = {normalize(term) for term in config["related"]}
+    requested_skills = {normalize(term) for term in config["skills"]}
+    excluded_roles = {normalize(term) for term in config["exclude_roles"]}
 
     requested_location = normalize(location)
-
     is_india_search = "india" in requested_location
     is_remote_search = "remote" in requested_location
-
-    foreign_locations = {
-        "united states", "usa", "boston",
-        "new york", "california", "texas",
-        "seattle", "chicago", "united kingdom",
-        "london", "canada", "toronto",
-        "vancouver", "australia", "sydney"
-    }
 
     results = []
     rejected = 0
 
     for original_job in jobs:
-
         job = dict(original_job)
-
         title = normalize(job.get("title", ""))
-        description = normalize(
-            job.get("description", "")
-        )
-        job_location = normalize(
-            job.get("location", "")
-        )
+        description = normalize(job.get("description", ""))
+        job_location = normalize(job.get("location", ""))
 
         if not title.strip():
             rejected += 1
             continue
 
-        # Reject senior positions.
-        if any(
-            contains_term(title, term)
-            for term in SENIOR_TERMS
+        # Exclude senior/staff/lead titles and higher job grades such as Engineer IV.
+        if (
+            any(contains_term(title, term) for term in SENIOR_TERMS)
+            or SENIOR_GRADE_PATTERN.search(title)
         ):
             rejected += 1
             continue
 
-        # Reject non-technical positions.
-        if any(
-            contains_term(title, term)
-            for term in NON_TECHNICAL_TERMS
-        ):
+        if any(contains_term(title, term) for term in NON_TECHNICAL_TERMS):
             rejected += 1
             continue
 
-        # Match primary and related job roles.
         title_matches = [
-            role for role in requested_roles
-            if contains_term(title, role)
+            role for role in requested_roles if contains_term(title, role)
         ]
 
         related_matches = [
-            role for role in related_roles
-            if contains_term(title, role)
+            role for role in related_roles if contains_term(title, role)
         ]
 
-        # Reject unrelated job categories.
+        # A title in an excluded category is rejected unless it also directly
+        # matches a requested primary title.
         excluded_match = any(
-            contains_term(title, role)
-            for role in excluded_roles
+            contains_term(title, role) for role in excluded_roles
         )
 
         if excluded_match and not title_matches:
             rejected += 1
             continue
 
-                # Require a matching primary or approved related job title.
-        # Description skills alone cannot qualify an unrelated job.
+        # Job title must match the requested role or an approved related role.
         if not title_matches and not related_matches:
             rejected += 1
             continue
 
-        # For GenAI and AI/ML searches, don't accept generic
-        # Python Developer roles based only on shared technical skills.
-        if config in (
-            ROLE_CONFIG["generative ai"],
-            ROLE_CONFIG["machine learning"],
-        ):
-            generic_python_roles = [
-                "python developer",
-                "python engineer",
-                "python development",
-            ]
+        # Explicitly prevent generic Python jobs from being treated as AI/ML.
+        if config is ROLE_CONFIG["machine learning"]:
+            has_ai_ml_title = any(
+                contains_term(title, role) for role in requested_roles
+            )
 
-            if (
-                not title_matches
-                and any(contains_term(title, role) for role in generic_python_roles)
-            ):
+            if not has_ai_ml_title:
                 rejected += 1
                 continue
 
-        # Ignore placeholder descriptions.
-        placeholder_phrases = [
+        if config is ROLE_CONFIG["generative ai"]:
+            has_genai_title = any(
+                contains_term(title, role) for role in requested_roles
+            )
+
+            if not has_genai_title:
+                rejected += 1
+                continue
+
+        placeholder_phrases = (
             "description not fetched",
             "no public description available",
             "no description available",
             "scraped via playwright",
             "hackerrank job posting",
-        ]
+        )
 
-        usable_description = (
-            description.strip()
-            and not any(
-                phrase in description
-                for phrase in placeholder_phrases
-            )
+        usable_description = bool(description.strip()) and not any(
+            phrase in description for phrase in placeholder_phrases
         )
 
         description_matches = []
@@ -360,22 +356,15 @@ def filter_and_rank_jobs(
                 if contains_term(description, skill)
             ]
 
-        # Role-based scoring.
         title_score = 50 if title_matches else 30
-
-        description_score = min(
-            len(description_matches) * 5,
-            25
-        )
+        description_score = min(len(description_matches) * 5, 25)
 
         entry_level = any(
-            contains_term(title, term)
-            for term in ENTRY_LEVEL_TERMS
+            contains_term(title, term) for term in ENTRY_LEVEL_TERMS
         )
 
         experience_score = 15 if entry_level else 0
 
-        # Explicit experience requirements.
         required_experience = get_required_experience(
             f"{title} {description}"
         )
@@ -387,12 +376,10 @@ def filter_and_rank_jobs(
             rejected += 1
             continue
 
-        # Location filtering.
         location_score = 0
 
         foreign_match = any(
-            contains_term(job_location, term)
-            for term in foreign_locations
+            contains_term(job_location, term) for term in FOREIGN_LOCATIONS
         )
 
         if is_india_search and foreign_match:
@@ -400,43 +387,35 @@ def filter_and_rank_jobs(
             continue
 
         has_remote = (
-            "remote" in job_location
-            or "work from home" in job_location
+            "remote" in job_location or "work from home" in job_location
         )
-
-        india_cities = [
-            "india", "bangalore", "bengaluru",
-            "hyderabad", "chennai", "pune",
-            "mumbai", "delhi", "noida",
-            "gurgaon", "gurugram"
-        ]
 
         if is_india_search:
             if has_remote or any(
-                contains_term(job_location, city)
-                for city in india_cities
+                contains_term(job_location, city) for city in INDIA_CITIES
             ):
+                location_score = 5
+            else:
+                rejected += 1
+                continue
+
+        elif is_remote_search:
+            if has_remote:
                 location_score = 5
             else:
                 rejected += 1
                 continue
 
         elif requested_location:
-            if contains_term(
-                job_location,
-                requested_location
-            ):
+            if contains_term(job_location, requested_location):
                 location_score = 5
             else:
                 rejected += 1
                 continue
 
         total_score = min(
-            title_score
-            + description_score
-            + experience_score
-            + location_score,
-            100
+            title_score + description_score + experience_score + location_score,
+            100,
         )
 
         if total_score < 20:
@@ -444,7 +423,6 @@ def filter_and_rank_jobs(
             continue
 
         job["relevance_score"] = total_score
-
         job["relevance_reasons"] = {
             "title_matches": title_matches,
             "related_matches": related_matches,
@@ -455,14 +433,14 @@ def filter_and_rank_jobs(
 
         results.append(job)
 
-    results.sort(
-        key=lambda item: item["relevance_score"],
-        reverse=True
-    )
+    results.sort(key=lambda item: item["relevance_score"], reverse=True)
 
     logger.info(
-        "Role-based filter: %s retained, %s rejected from %s jobs",
-        len(results), rejected, len(jobs)
+        "Role-based filter (%s): %s retained, %s rejected from %s jobs",
+        " ".join(config["roles"]),
+        len(results),
+        rejected,
+        len(jobs),
     )
 
     return results

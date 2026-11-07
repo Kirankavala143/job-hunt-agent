@@ -5,55 +5,97 @@ import re
 logger = logging.getLogger(__name__)
 
 
+# --------------------------------------------------
+# ROLE CONFIGURATION
+# --------------------------------------------------
+
 ROLE_CONFIG = {
     "Generative AI": {
         "terms": [
-            "generative ai", "genai", "llm", "rag",
-            "langchain", "agentic ai", "prompt engineer"
+            "generative ai",
+            "genai",
+            "llm",
+            "llms",
+            "rag",
+            "langchain",
+            "agentic ai",
+            "prompt engineer",
         ],
         "titles": [
             "Generative AI Intern",
+            "Generative AI Engineer Fresher",
             "LLM Developer Intern",
+            "LLM Engineer Fresher",
             "RAG Developer Intern",
+            "AI Agent Developer Intern",
         ],
     },
+
     "AI/ML": {
         "terms": [
-            "artificial intelligence", "machine learning",
-            "ml engineer", "deep learning", "ai engineer",
-            "ai/ml"
+            "artificial intelligence",
+            "machine learning",
+            "ml engineer",
+            "deep learning",
+            "ai engineer",
+            "ai/ml",
+            "aiml",
+            "computer vision",
+            "nlp engineer",
+            "machine learning engineer",
         ],
         "titles": [
+            "AI/ML Engineer Intern",
+            "AI/ML Engineer Fresher",
             "AI Engineer Intern",
+            "AI Engineer Fresher",
             "Machine Learning Intern",
+            "Machine Learning Engineer Fresher",
+            "ML Engineer Intern",
             "ML Engineer Fresher",
+            "Deep Learning Intern",
+            "Computer Vision Intern",
+            "NLP Engineer Intern",
+            "Junior Machine Learning Engineer",
         ],
     },
+
     "Data Science": {
         "terms": [
-            "data science", "data scientist",
-            "data science intern"
+            "data science",
+            "data scientist",
+            "data science intern",
         ],
         "titles": [
             "Data Science Intern",
             "Junior Data Scientist",
+            "Data Scientist Fresher",
         ],
     },
+
     "Data Analytics": {
         "terms": [
-            "data analyst", "data analytics",
-            "business analyst", "power bi", "tableau"
+            "data analyst",
+            "data analytics",
+            "business analyst",
+            "power bi",
+            "tableau",
         ],
         "titles": [
             "Data Analyst Intern",
             "Business Analyst Intern",
             "SQL Analyst Fresher",
+            "Junior Data Analyst",
         ],
     },
+
     "SQL": {
         "terms": [
-            "sql developer", "sql", "mysql",
-            "postgresql", "database developer"
+            "sql developer",
+            "sql",
+            "mysql",
+            "postgresql",
+            "database developer",
         ],
         "titles": [
             "SQL Developer Fresher",
@@ -61,60 +103,132 @@ ROLE_CONFIG = {
             "Junior Database Developer",
         ],
     },
+
     "Python": {
         "terms": [
-            "python developer", "python engineer",
-            "python", "django", "fastapi", "flask"
+            "python developer",
+            "python engineer",
+            "python",
+            "django",
+            "fastapi",
+            "flask",
         ],
         "titles": [
             "Python Developer Intern",
             "Python Developer Fresher",
+            "Junior Python Developer",
         ],
     },
+
     "Full Stack": {
         "terms": [
-            "full stack", "mern", "react", "node.js",
-            "frontend", "backend", "web developer"
+            "full stack",
+            "fullstack",
+            "mern",
+            "react",
+            "node.js",
+            "frontend",
+            "backend",
+            "web developer",
         ],
         "titles": [
             "React Developer Intern",
             "Full Stack Developer Intern",
             "Frontend Developer Fresher",
+            "Backend Developer Intern",
         ],
     },
+
     "Software Development": {
         "terms": [
-            "software engineer", "software developer",
-            "sde", "developer"
+            "software engineer",
+            "software developer",
+            "sde",
+            "developer",
         ],
         "titles": [
             "Software Developer Intern",
             "Software Engineer Fresher",
+            "Junior Software Engineer",
         ],
     },
 }
 
 
+# --------------------------------------------------
+# TEXT HELPERS
+# --------------------------------------------------
+
+def normalize_text(text: str) -> str:
+    """
+    Normalize text for reliable keyword matching.
+    """
+
+    text = str(text or "").lower()
+
+    text = re.sub(
+        r"[^a-z0-9+#./\s-]",
+        " ",
+        text,
+    )
+
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def contains_phrase(text: str, phrase: str) -> bool:
-    pattern = r"(?<!\w)" + re.escape(phrase.lower()) + r"(?!\w)"
+    """
+    Check for a phrase using word boundaries.
+    """
+
+    text = normalize_text(text)
+    phrase = normalize_text(phrase)
+
+    if not text or not phrase:
+        return False
+
+    pattern = (
+        r"(?<!\w)"
+        + re.escape(phrase)
+        + r"(?!\w)"
+    )
+
     return bool(re.search(pattern, text))
 
 
+# --------------------------------------------------
+# LOCATION EXTRACTION
+# --------------------------------------------------
+
 def extract_location(text: str) -> str:
-    text = text.lower()
+    text = normalize_text(text)
 
     # Explicit remote searches
     if re.search(r"\bremote\s+india\b", text):
         return "Remote India"
 
-    if re.search(r"\bremote\b|\bwork\s+from\s+home\b|\bwfh\b", text):
+    if re.search(
+        r"\bremote\b|\bwork\s+from\s+home\b|\bwfh\b",
+        text,
+    ):
         return "Remote India"
 
     cities = [
-        "bangalore", "bengaluru", "hyderabad",
-        "chennai", "pune", "mumbai", "delhi",
-        "noida", "gurgaon", "gurugram", "kolkata",
-        "visakhapatnam", "kakinada", "rajahmundry"
+        "bangalore",
+        "bengaluru",
+        "hyderabad",
+        "chennai",
+        "pune",
+        "mumbai",
+        "delhi",
+        "noida",
+        "gurgaon",
+        "gurugram",
+        "kolkata",
+        "visakhapatnam",
+        "kakinada",
+        "rajahmundry",
+        "rajahmahendravaram",
+        "vizianagaram",
     ]
 
     for city in cities:
@@ -127,27 +241,46 @@ def extract_location(text: str) -> str:
     return "Remote India"
 
 
+# --------------------------------------------------
+# DOMAIN DETECTION
+# --------------------------------------------------
 
-def extract_search_details(message: str, resume_text: str = ""):
+def detect_domains(text: str) -> list[str]:
     """
-    Extract job domains and location using deterministic Python.
-    No external AI API required.
+    Detect job domains requested by the user.
+
+    Important:
+    AI/ML searches should not automatically become
+    Python Developer searches.
     """
 
-    text = message.lower().strip()
-    location = extract_location(text)
+    text = normalize_text(text)
 
     detected_domains = []
 
-    for domain, config in ROLE_CONFIG.items():
+    # Check more specific domains first.
+    domain_priority = [
+        "Generative AI",
+        "AI/ML",
+        "Data Science",
+        "Data Analytics",
+        "Full Stack",
+        "SQL",
+        "Python",
+        "Software Development",
+    ]
+
+    for domain in domain_priority:
+        config = ROLE_CONFIG[domain]
+
         if any(
             contains_phrase(text, term)
             for term in config["terms"]
         ):
             detected_domains.append(domain)
 
-    # Avoid adding generic software roles when a specific
-    # developer domain has already been identified.
+    # Remove generic software development when a
+    # specific domain has already been detected.
     specific_domains = {
         "Generative AI",
         "AI/ML",
@@ -165,15 +298,64 @@ def extract_search_details(message: str, resume_text: str = ""):
         ):
             detected_domains.remove("Software Development")
 
+    # Remove Python from an AI/ML query when Python
+    # was mentioned only as a supporting technology.
+    if "AI/ML" in detected_domains:
+        if not contains_phrase(text, "python developer"):
+            detected_domains = [
+                domain
+                for domain in detected_domains
+                if domain != "Python"
+            ]
+
+    # A GenAI search should not become a generic Python search.
+    if "Generative AI" in detected_domains:
+        if not contains_phrase(text, "python developer"):
+            detected_domains = [
+                domain
+                for domain in detected_domains
+                if domain != "Python"
+            ]
+
+    return detected_domains
+
+
+# --------------------------------------------------
+# SEARCH DETAIL EXTRACTION
+# --------------------------------------------------
+
+def extract_search_details(
+    message: str,
+    resume_text: str = "",
+):
+    """
+    Extract job domains, search titles, and location.
+
+    This function uses deterministic Python and does not
+    require an external AI API.
+    """
+
+    text = normalize_text(message)
+
+    location = extract_location(text)
+
+    detected_domains = detect_domains(text)
+
+    # Do not silently default unknown queries to Python.
     if not detected_domains:
-        detected_domains = ["Python"]
+        detected_domains = ["Software Development"]
 
     job_titles = []
 
     for domain in detected_domains:
-        job_titles.extend(ROLE_CONFIG[domain]["titles"])
+        job_titles.extend(
+            ROLE_CONFIG[domain]["titles"]
+        )
 
-    job_titles = list(dict.fromkeys(job_titles))
+    # Remove duplicate titles while preserving order.
+    job_titles = list(
+        dict.fromkeys(job_titles)
+    )
 
     logger.info(
         "Detected domains: %s | Job titles: %s | Location: %s",
@@ -185,8 +367,15 @@ def extract_search_details(message: str, resume_text: str = ""):
     return job_titles, location
 
 
+# --------------------------------------------------
+# MAIN AGENT
+# --------------------------------------------------
 
-def run_agent(message: str, resume_text: str = "") -> tuple:
+def run_agent(
+    message: str,
+    resume_text: str = "",
+) -> tuple:
+
     """
     1. Extract job keywords.
     2. Execute job scrapers.
@@ -196,7 +385,7 @@ def run_agent(message: str, resume_text: str = "") -> tuple:
     try:
         keywords_list, location = extract_search_details(
             message,
-            resume_text
+            resume_text,
         )
 
         from crew_agency import deploy_job_hunt_agency
@@ -211,7 +400,8 @@ def run_agent(message: str, resume_text: str = "") -> tuple:
         )
 
         keywords_display = ", ".join(
-            f"`{keyword}`" for keyword in keywords_list
+            f"`{keyword}`"
+            for keyword in keywords_list
         )
 
         reply = (
@@ -223,15 +413,15 @@ def run_agent(message: str, resume_text: str = "") -> tuple:
 
         return reply, jobs_list, raw_jobs_list
 
-    except Exception as e:
+    except Exception as error:
         logger.error(
             "Job Hunt Agent error: %s",
-            e,
-            exc_info=True
+            error,
+            exc_info=True,
         )
 
         return (
-            f"The job search encountered an execution error: {str(e)}",
+            f"The job search encountered an execution error: {str(error)}",
             [],
             [],
         )

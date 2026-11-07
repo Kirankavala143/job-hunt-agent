@@ -5,6 +5,38 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 logger = logging.getLogger(__name__)
 
 
+def get_jobspy_country(location: str) -> str:
+    """Map the requested location to JobSpy's country setting."""
+
+    loc = str(location or "").strip().lower()
+
+    if any(term in loc for term in (
+        "india", "bangalore", "bengaluru", "mumbai",
+        "delhi", "hyderabad", "pune", "chennai",
+        "noida", "gurgaon", "gurugram", "visakhapatnam",
+        "kakinada", "vijayawada",
+    )):
+        return "india"
+
+    if any(term in loc for term in (
+        "united kingdom", " uk ", "london", "england",
+    )):
+        return "uk"
+
+    if any(term in loc for term in (
+        "canada", "toronto", "vancouver",
+    )):
+        return "canada"
+
+    if any(term in loc for term in (
+        "australia", "sydney", "melbourne",
+    )):
+        return "australia"
+
+    # Don't silently default an unspecified location to USA.
+    return "india"
+
+
 def search_jobs(scraper_name, keyword, location):
     """Execute one scraper without requiring an AI agent."""
 
@@ -18,37 +50,23 @@ def search_jobs(scraper_name, keyword, location):
         )
 
         if scraper_name == "jobspy":
-            loc_lower = location.lower()
-            country = "usa"
-
-            if any(w in loc_lower for w in [
-                "india", "bangalore", "bengaluru", "mumbai",
-                "delhi", "hyderabad", "pune", "chennai"
-            ]):
-                country = "india"
-            elif any(w in loc_lower for w in [
-                "uk", "london", "united kingdom"
-            ]):
-                country = "uk"
-            elif any(w in loc_lower for w in [
-                "canada", "toronto", "vancouver"
-            ]):
-                country = "canada"
-
+            country = get_jobspy_country(location)
             jobs = []
 
             for site in ["indeed", "linkedin"]:
                 try:
                     results = JobSpyScraper(
                         site_name=site,
-                        country=country
+                        country=country,
                     ).search(keyword, location)
 
-                    jobs.extend(results)
+                    jobs.extend(results or [])
 
                     logger.info(
                         "JobSpy [%s] '%s': %s jobs",
-                        site, keyword, len(results)
+                        site,
+                        keyword,
+                        len(results or []),
                     )
 
                 except Exception as e:
@@ -56,22 +74,22 @@ def search_jobs(scraper_name, keyword, location):
 
             return jobs
 
-        elif scraper_name == "playwright":
+        if scraper_name == "playwright":
             return LinkedInPlaywrightScraper().search(
                 keyword, location
             )
 
-        elif scraper_name == "searxng":
+        if scraper_name == "searxng":
             return SearxNGCrawl4aiScraper().search(
                 keyword, location
             )
 
-        elif scraper_name == "rss":
+        if scraper_name == "rss":
             return RSSJobScraper().search(
                 keyword, location
             )
 
-        elif scraper_name == "yc":
+        if scraper_name == "yc":
             return YCScraper().search(
                 keyword, location
             )
@@ -89,23 +107,22 @@ def deploy_job_hunt_agency(
     keywords_list: list,
     location: str,
     resume_text: str,
-    user_prompt: str = ""
+    user_prompt: str = "",
 ) -> tuple:
     """
-    Execute job scrapers directly using Python.
+    Execute job scrapers directly.
 
     Pipeline:
         1. Run scrapers concurrently.
         2. Collect job listings.
         3. Remove duplicates.
-        4. Apply balanced relevance filtering.
+        4. Apply role and location filtering.
         5. Calculate ATS scores.
 
     Returns:
         summary, scored_jobs, raw_jobs
     """
 
-    # Local collection prevents shared state between API requests.
     all_scraped_jobs = []
 
     scraper_names = [
@@ -126,21 +143,18 @@ def deploy_job_hunt_agency(
         len(tasks), len(keywords_list)
     )
 
-    # Step 1: Run scraper tasks concurrently.
     with ThreadPoolExecutor(max_workers=3) as executor:
-
         futures = {
             executor.submit(
                 search_jobs,
                 scraper_name,
                 keyword,
-                location
+                location,
             ): (scraper_name, keyword)
             for scraper_name, keyword, location in tasks
         }
 
         for future in as_completed(futures):
-
             scraper_name, keyword = futures[future]
 
             try:
@@ -153,7 +167,7 @@ def deploy_job_hunt_agency(
                     "%s completed for '%s': %s jobs",
                     scraper_name,
                     keyword,
-                    len(jobs)
+                    len(jobs),
                 )
 
             except Exception as e:
@@ -161,15 +175,14 @@ def deploy_job_hunt_agency(
                     "%s failed for '%s': %s",
                     scraper_name,
                     keyword,
-                    e
+                    e,
                 )
 
-    # Step 2: Remove duplicate jobs.
+    # Deduplicate listings.
     seen = set()
     raw_jobs = []
 
     for job in all_scraped_jobs:
-
         if not isinstance(job, dict):
             continue
 
@@ -187,52 +200,48 @@ def deploy_job_hunt_agency(
 
     logger.info(
         "Unique jobs before filtering: %s",
-        len(raw_jobs)
+        len(raw_jobs),
     )
 
-    # Step 3: Apply balanced relevance filtering.
+    # Apply role, experience, and location filtering.
     from job_filter import filter_and_rank_jobs
 
     filtered_jobs = filter_and_rank_jobs(
         jobs=raw_jobs,
         keywords_list=keywords_list,
-        location=location
+        location=location,
     )
 
     logger.info(
         "Jobs after balanced filtering: %s",
-        len(filtered_jobs)
+        len(filtered_jobs),
     )
 
-    raw_jobs = filtered_jobs
-
-    # Step 4: Handle empty results.
-    if not raw_jobs:
+    if not filtered_jobs:
         return (
             "No relevant jobs were found. Try different keywords "
             "or check scraper availability.",
             [],
-            []
+            [],
         )
 
-    # Step 5: Calculate ATS scores.
+    # Score only filtered jobs.
     from ats_scorer import score_all_jobs
 
     scored_jobs = score_all_jobs(
         resume_text,
-        raw_jobs
+        filtered_jobs,
     )
 
     logger.info(
         "ATS scoring completed: %s jobs",
-        len(scored_jobs)
+        len(scored_jobs),
     )
 
-    # Step 6: Generate summary.
     summary = (
         f"**{len(scored_jobs)} relevant jobs** found and scored.\n"
-        "- Jobs are filtered using balanced role matching.\n"
+        "- Jobs are filtered by role, experience, and location.\n"
         "- Jobs are ranked by resume match score.\n"
     )
 
-    return summary, scored_jobs, raw_jobs
+    return summary, scored_jobs, filtered_jobs
