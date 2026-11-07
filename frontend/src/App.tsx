@@ -3017,6 +3017,21 @@ function NotFoundPage() {
 
 function JobMiniCard({ job }: { job: Job }) {
 
+  const { toast, notify, dismiss } = useToast();
+
+  const saveJob = () => {
+    const current = readSavedJobs();
+    const marker = `${job.company}-${job.title}-${job.url}`;
+
+    if (current.some((item) => `${item.company}-${item.title}-${item.url}` === marker)) {
+      notify('Job is already saved.', 'success');
+      return;
+    }
+
+    localStorage.setItem('jobhunt_saved_jobs', JSON.stringify([...current, job]));
+    notify('Job details saved successfully!', 'success');
+  };
+
   return (
 
     <div className="mini-job-card">
@@ -3039,23 +3054,13 @@ function JobMiniCard({ job }: { job: Job }) {
 
       <div className="mini-actions">
 
-        <button type="button" className="secondary-button" onClick={() => {
-
-          const current = readSavedJobs();
-
-          const marker = `${job.company}-${job.title}-${job.url}`;
-
-          if (!current.some((item) => `${item.company}-${item.title}-${item.url}` === marker)) {
-
-            localStorage.setItem('jobhunt_saved_jobs', JSON.stringify([...current, job]));
-
-          }
-
-        }}>Save</button>
+        <button type="button" className="secondary-button" onClick={saveJob}>Save</button>
 
         <a href={job.url} target="_blank" rel="noreferrer">View details</a>
 
       </div>
+
+      <ToastRegion toast={toast} onDismiss={dismiss} />
 
     </div>
 
@@ -3068,6 +3073,8 @@ function JobMiniCard({ job }: { job: Job }) {
 function JobCard({ job, rank }: { job: Job; rank: number }) {
 
   const [saved, setSaved] = useState(() => readSavedJobs().some((item) => `${item.company}-${item.title}-${item.url}` === `${job.company}-${job.title}-${job.url}`));
+
+  const { toast, notify, dismiss } = useToast();
 
 
 
@@ -3084,6 +3091,8 @@ function JobCard({ job, rank }: { job: Job; rank: number }) {
     localStorage.setItem('jobhunt_saved_jobs', JSON.stringify(next));
 
     setSaved(!exists);
+
+    notify(exists ? 'Job removed from saved jobs.' : 'Job details saved successfully!', 'success');
 
   };
 
@@ -3166,6 +3175,8 @@ function JobCard({ job, rank }: { job: Job; rank: number }) {
         <a href={job.url} target="_blank" rel="noreferrer" className="apply-link">Apply Now</a>
 
       </div>
+
+      <ToastRegion toast={toast} onDismiss={dismiss} />
 
     </article>
 

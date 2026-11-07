@@ -430,87 +430,117 @@ def delete_alert(
 
 # ---------------- ASSISTANT INTENT ROUTING ----------------
 
+
 def detect_chat_intent(message: str) -> str:
-    text = message.lower().strip()
+    """Route a user's message to job search or the relevant assistant flow."""
+    text = " ".join(message.lower().strip().split())
 
-    job_search_phrases = [
-        "find jobs", "search jobs", "job search",
-        "show jobs", "jobs for me", "job openings",
-        "job opportunities", "find vacancies",
-        "search vacancies", "internships",
-    ]
-
-    resume_phrases = [
-        "analyze my resume", "analyse my resume",
-        "resume analysis", "review my resume",
-        "check my resume", "improve my resume",
-        "ats score", "resume score",
-    ]
-
-    cover_letter_phrases = [
-        "cover letter", "write a cover letter",
-        "generate cover letter",
-    ]
-
-    interview_phrases = [
-        "interview preparation", "prepare for interview",
-        "interview questions", "mock interview",
-    ]
-
-    career_phrases = [
-        "career roadmap", "career advice",
-        "what should i learn", "learning roadmap",
-    ]
-
+    # Handle specific intents before broad job-related keywords.
+    resume_phrases = (
+        "analyze my resume",
+        "analyse my resume",
+        "resume analysis",
+        "review my resume",
+        "check my resume",
+        "improve my resume",
+        "ats score",
+        "resume score",
+        "resume match",
+        "match my resume",
+    )
     if any(phrase in text for phrase in resume_phrases):
         return "resume"
 
+    cover_letter_phrases = (
+        "cover letter",
+        "write a cover letter",
+        "generate cover letter",
+    )
     if any(phrase in text for phrase in cover_letter_phrases):
         return "cover_letter"
 
+    interview_phrases = (
+        "interview preparation",
+        "prepare for interview",
+        "interview questions",
+        "mock interview",
+    )
     if any(phrase in text for phrase in interview_phrases):
         return "interview"
 
+    career_phrases = (
+        "career roadmap",
+        "career advice",
+        "what should i learn",
+        "learning roadmap",
+    )
     if any(phrase in text for phrase in career_phrases):
         return "career"
 
+    # Explicit job-search wording.
+    job_search_phrases = (
+        "find jobs",
+        "search jobs",
+        "job search",
+        "show jobs",
+        "jobs for me",
+        "job openings",
+        "job opportunities",
+        "find vacancies",
+        "search vacancies",
+        "find internships",
+        "search internships",
+        "job listings",
+        "job alerts",
+        "fresher jobs",
+        "entry level jobs",
+        "entry-level jobs",
+    )
     if any(phrase in text for phrase in job_search_phrases):
         return "job_search"
 
-    # Job-search requests that include a job role.
-    if text.startswith(("find ", "search for ", "show me ")):
+    # Natural-language requests like "find AI developer jobs across India"
+    # or "search for GenAI internships in Bangalore".
+    search_actions = (
+        "find ",
+        "search ",
+        "search for ",
+        "show ",
+        "show me ",
+        "look for ",
+        "get me ",
+        "discover ",
+        "list ",
+    )
+    job_terms = (
+        "job",
+        "jobs",
+        "internship",
+        "internships",
+        "vacancy",
+        "vacancies",
+        "hiring",
+        "developer",
+        "engineer",
+        "analyst",
+        "trainee",
+        "fresher",
+        "genai",
+        "aiml",
+        "machine learning",
+        "artificial intelligence",
+        "software",
+        "python",
+        "data science",
+    )
+    if text.startswith(search_actions) and any(term in text for term in job_terms):
         return "job_search"
 
+    # Do not use "assistant" here: /api/chat routes general requests as "chat".
     return "chat"
 
 
 # ---------------- AI ASSISTANT HELPERS ----------------
-
-def detect_chat_intent(message: str) -> str:
-    text = message.lower().strip()
-
-    if any(x in text for x in [
-        "find jobs", "search jobs", "job search",
-        "show jobs", "job openings", "job opportunities",
-        "find vacancies", "search vacancies",
-    ]):
-        return "job_search"
-
-    if any(x in text for x in [
-        "analyze my resume", "analyse my resume",
-        "resume analysis", "review my resume",
-        "check my resume", "ats score",
-    ]):
-        return "resume"
-
-    if any(x in text for x in [
-        "cover letter", "write a cover letter",
-        "generate cover letter",
-    ]):
-        return "cover_letter"
-
-    return "assistant"
-
 
 def generate_ai_reply(
     message: str,

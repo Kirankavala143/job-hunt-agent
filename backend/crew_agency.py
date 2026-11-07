@@ -210,6 +210,7 @@ def deploy_job_hunt_agency(
         jobs=raw_jobs,
         keywords_list=keywords_list,
         location=location,
+        user_prompt=user_prompt,
     )
 
     logger.info(

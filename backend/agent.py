@@ -43,8 +43,14 @@ ROLE_CONFIG = {
             "computer vision",
             "nlp engineer",
             "machine learning engineer",
+            "ai developer",
+            "artificial intelligence developer",
         ],
         "titles": [
+            "AI Developer Intern",
+            "AI Developer Fresher",
+            "Junior AI Developer",
+            "Artificial Intelligence Developer Intern",
             "AI/ML Engineer Intern",
             "AI/ML Engineer Fresher",
             "AI Engineer Intern",
@@ -136,6 +142,26 @@ ROLE_CONFIG = {
             "Full Stack Developer Intern",
             "Frontend Developer Fresher",
             "Backend Developer Intern",
+        ],
+    },
+
+    "Salesforce": {
+        "terms": [
+            "salesforce",
+            "salesforce developer",
+            "salesforce administrator",
+            "salesforce admin",
+            "apex developer",
+            "salesforce crm",
+        ],
+        "titles": [
+            "Salesforce Developer Intern",
+            "Salesforce Developer Fresher",
+            "Junior Salesforce Developer",
+            "Salesforce Admin Intern",
+            "Salesforce Administrator Fresher",
+            "Salesforce CRM Developer",
+            "Apex Developer Intern",
         ],
     },
 
@@ -261,6 +287,7 @@ def detect_domains(text: str) -> list[str]:
     # Check more specific domains first.
     domain_priority = [
         "Generative AI",
+        "Salesforce",
         "AI/ML",
         "Data Science",
         "Data Analytics",
@@ -283,6 +310,7 @@ def detect_domains(text: str) -> list[str]:
     # specific domain has already been detected.
     specific_domains = {
         "Generative AI",
+        "Salesforce",
         "AI/ML",
         "Data Science",
         "Data Analytics",

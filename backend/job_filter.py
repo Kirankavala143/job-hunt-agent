@@ -76,7 +76,8 @@ ROLE_CONFIG = {
     "machine learning": {
         "roles": {
             "machine learning", "machine learning engineer",
-            "ml engineer", "ai engineer", "artificial intelligence",
+            "ml engineer", "ai developer", "artificial intelligence developer",
+            "ai engineer", "artificial intelligence",
             "ai/ml engineer", "ai ml engineer", "deep learning engineer",
             "computer vision engineer", "nlp engineer",
             "machine learning intern", "ml intern", "ai intern",
@@ -125,6 +126,25 @@ ROLE_CONFIG = {
             "sql", "python", "excel", "power bi", "tableau", "pandas",
         },
         "exclude_roles": set(),
+    },
+
+    "salesforce": {
+        "roles": {
+            "salesforce", "salesforce developer", "salesforce administrator",
+            "salesforce admin", "salesforce crm developer", "apex developer",
+            "salesforce consultant", "salesforce engineer",
+        },
+        "related": {
+            "salesforce intern", "crm developer", "apex engineer",
+        },
+        "skills": {
+            "salesforce", "apex", "visualforce", "lightning web components",
+            "lwc", "salesforce crm", "soql", "sosl", "salesforce flow",
+        },
+        "exclude_roles": {
+            "software developer", "software engineer", "python developer",
+            "web developer", "data analyst",
+        },
     },
 
     "software engineer": {
@@ -207,7 +227,12 @@ def _identify_role_config(query: str) -> dict[str, Any]:
     """Identify the requested role; specific AI terms take precedence."""
     q = normalize(query)
 
-    # Prioritize specialized domains over generic terms such as Python.
+    # Prioritize specific role families over generic terms such as developer.
+    if any(contains_term(q, term) for term in (
+        "salesforce", "apex developer", "salesforce crm",
+    )):
+        return ROLE_CONFIG["salesforce"]
+
     if any(contains_term(q, term) for term in (
         "generative ai", "genai", "gen ai", "llm", "rag",
         "prompt engineer", "ai agent",
@@ -215,8 +240,9 @@ def _identify_role_config(query: str) -> dict[str, Any]:
         return ROLE_CONFIG["generative ai"]
 
     if any(contains_term(q, term) for term in (
-        "machine learning", "ml engineer", "ai engineer",
-        "artificial intelligence", "ai/ml", "deep learning",
+        "machine learning", "ml engineer", "ai engineer", "ai developer",
+        "artificial intelligence developer", "artificial intelligence",
+        "ai/ml", "aiml", "deep learning",
         "computer vision", "nlp engineer",
     )):
         return ROLE_CONFIG["machine learning"]
@@ -247,6 +273,7 @@ def filter_and_rank_jobs(
     jobs: list[dict[str, Any]],
     keywords_list: list[str],
     location: str = "Remote India",
+    user_prompt: str = "",
 ) -> list[dict[str, Any]]:
     """
     Filter jobs by role title, experience, and location, then rank them.
@@ -257,7 +284,9 @@ def filter_and_rank_jobs(
     if not jobs:
         return []
 
-    query = normalize(" ".join(keywords_list))
+    # The user's exact request is the source of truth. Generated scraper
+    # keywords may contain broad terms or omit the requested role name.
+    query = normalize(user_prompt or " ".join(keywords_list))
     config = _identify_role_config(query)
 
     requested_roles = {normalize(term) for term in config["roles"]}
